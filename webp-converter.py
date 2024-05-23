@@ -1,5 +1,6 @@
 import tkinter as tk
-from tkinter import filedialog, messagebox, ttk
+from tkinter import filedialog, messagebox
+from tkinter import ttk
 from PIL import Image, ImageOps, ImageTk
 import numpy as np
 import os
@@ -32,18 +33,21 @@ def save_image(image, output_path):
     image.save(output_path, 'PNG')
 
 # Function to handle image processing
-def process_image():
-    filepaths = filedialog.askopenfilenames(filetypes=[("WEBP files", "*.webp")])
-    if not filepaths:
-        messagebox.showerror("Error", "No files selected")
-        return
-
+def process_images():
     try:
         bg_color = bg_color_var.get()
-        width = int(width_var.get())
-        height = int(height_var.get())
+        width = width_var.get()
+        height = height_var.get()
+
+        # Input validation
+        if not width.isdigit() or not height.isdigit():
+            messagebox.showerror("Error", "Width and height must be integers")
+            return
+
+        width = int(width)
+        height = int(height)
         size = (width, height)
-        
+
         for filepath in filepaths:
             image = load_and_convert_image(filepath)
             image = remove_background(image, bg_color)
@@ -53,9 +57,16 @@ def process_image():
             save_image(image, output_path)
         
         messagebox.showinfo("Success", "Images processed successfully")
-        display_images(filepaths)
     except Exception as e:
         messagebox.showerror("Error", str(e))
+
+# Function to handle image selection
+def select_images():
+    global filepaths
+    filepaths = filedialog.askopenfilenames(filetypes=[("WEBP files", "*.webp")])
+    if not filepaths:
+        return
+    display_images(filepaths)
 
 # Function to display selected images
 def display_images(filepaths):
@@ -66,7 +77,7 @@ def display_images(filepaths):
         img = Image.open(filepath)
         img.thumbnail((150, 150))
         img = ImageTk.PhotoImage(img)
-        panel = tk.Label(preview_frame, image=img)
+        panel = ttk.Label(preview_frame, image=img)
         panel.image = img
         panel.pack(side="left", padx=5, pady=5)
 
@@ -75,28 +86,39 @@ root = tk.Tk()
 root.title("WEBP to PNG Converter")
 root.geometry("800x600")
 
+# Apply ttk theme
+style = ttk.Style(root)
+try:
+    root.tk.call("source", "azure.tcl")
+    style.theme_use("azure")
+except tk.TclError:
+    messagebox.showwarning("Theme Error", "Azure theme file not found. Using default theme.")
+
+# Select images button
+ttk.Button(root, text="Select Images", command=select_images).grid(row=0, column=0, padx=10, pady=10)
+
 # Background color selection
-tk.Label(root, text="Background color to remove:").grid(row=0, column=0, padx=10, pady=10)
+ttk.Label(root, text="Background color to remove:").grid(row=1, column=0, padx=10, pady=10)
 bg_color_var = tk.StringVar(value="white")
-tk.Radiobutton(root, text="White", variable=bg_color_var, value="white").grid(row=0, column=1)
-tk.Radiobutton(root, text="Black", variable=bg_color_var, value="black").grid(row=0, column=2)
+ttk.Radiobutton(root, text="White", variable=bg_color_var, value="white").grid(row=1, column=1)
+ttk.Radiobutton(root, text="Black", variable=bg_color_var, value="black").grid(row=1, column=2)
 
 # Width input
-tk.Label(root, text="Desired width:").grid(row=1, column=0, padx=10, pady=10)
+ttk.Label(root, text="Desired width:").grid(row=2, column=0, padx=10, pady=10)
 width_var = tk.StringVar()
-tk.Entry(root, textvariable=width_var).grid(row=1, column=1, columnspan=2)
+ttk.Entry(root, textvariable=width_var).grid(row=2, column=1, columnspan=2)
 
 # Height input
-tk.Label(root, text="Desired height:").grid(row=2, column=0, padx=10, pady=10)
+ttk.Label(root, text="Desired height:").grid(row=3, column=0, padx=10, pady=10)
 height_var = tk.StringVar()
-tk.Entry(root, textvariable=height_var).grid(row=2, column=1, columnspan=2)
+ttk.Entry(root, textvariable=height_var).grid(row=3, column=1, columnspan=2)
 
 # Process button
-tk.Button(root, text="Convert Images", command=process_image).grid(row=3, column=0, columnspan=3, pady=20)
+ttk.Button(root, text="Convert Images", command=process_images).grid(row=4, column=0, columnspan=3, pady=20)
 
 # Preview frame
-preview_frame = tk.Frame(root)
-preview_frame.grid(row=4, column=0, columnspan=3, pady=10)
+preview_frame = ttk.Frame(root)
+preview_frame.grid(row=5, column=0, columnspan=3, pady=10)
 
 # Start the GUI event loop
 root.state('zoomed')  # Maximize window on load
